@@ -1,0 +1,48 @@
+name: testes
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  testes:
+    runs-on: ${{ matrix.so }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        so: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      # O juiz e a DEFINICAO de numero cromatico: o menor k para o qual existe uma
+      # atribuicao de k cores sem aresta monocromatica, achado por busca
+      # exaustiva. Comparar heuristicas entre si diz quando elas discordam e nao
+      # diz qual esta certa.
+      - name: testes
+        run: dotnet test testes/Coloracao.Testes/Coloracao.Testes.csproj -c Release --nologo -v q
+
+      - name: a definicao e os teoremas, nos grafos pequenos
+        run: dotnet run --project ferramentas/Medidor/Medidor.csproj -c Release -- definicao
+
+      # A coroa e um grafo de DUAS cores em que a gulosa gasta metade dos
+      # vertices. Rodar em tres sistemas importa porque os grafos sorteados vem de
+      # um gerador escrito aqui: se eles mudassem entre sistemas, "a ordem por
+      # grau gastou dez cores" nao seria comparavel com nada.
+      - name: a coroa, com a ordem decidindo tudo
+        run: dotnet run --project ferramentas/Medidor/Medidor.csproj -c Release -- coroa
+
+      - name: todas as ordens possiveis
+        run: dotnet run --project ferramentas/Medidor/Medidor.csproj -c Release -- ordens
+
+      - name: a escada de Mycielski
+        run: dotnet run --project ferramentas/Medidor/Medidor.csproj -c Release -- mycielski
+
+      - name: as heuristicas nos grafos grandes
+        run: dotnet run --project ferramentas/Medidor/Medidor.csproj -c Release -- heuristica
